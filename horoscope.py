@@ -169,3 +169,7 @@ def ing_to_ed(word):
 		return (word[:-3] + "ed")
 	else:
 		return word
+
+
+if __name__ ==  "__main__":
+	print horoscope()
