@@ -17,24 +17,28 @@ time_point = ["arrival", "beginning", "start", "end", "death"]
 
 time_period = ["interlude", "period", "week", "day"]
 
-# Emotive words
+# Emotive adjectives
 good_feeling_adj = ["romantic", "emotional", "reflective", "irreverent", "subversive",
-			"spiritual", "creative", "intellectual", "adventurous"]
+			"spiritual", "creative", "intellectual", "adventurous",
+			"enlightening"]
 
-good_emotive_adj = ["cathartic", "healing", "enlightening", "mystical"]
+good_emotive_adj = ["cathartic", "healing", "mystical"]
 
-bad_emotive_adj = ["bitter", "anti-climactic", "disappointing", "emotional", "frustrating"]
+bad_feeling_adj = ["bitter", "disappointing", "frustrating"]
 
+bad_emotive_adj = ["anti-climactic"]
+
+# Emotive nouns
 good_emotive_noun = ["love", "reflection", "romance", "enlightenment",
 			"healing", "catharsis", "mysticism", "joy", "desire",
 			"transcendence", "creativity", "metamorphosis"]
 
 bad_emotive_noun = ["bitterness", "disappointment", "sadness", "frustration", "anger", "failure", "boredom"]
 
-emotional_degree = ["a little bit", "pretty", "ridiculously", "amazingly"]
-
 # Misc
 vowels = {'a', 'e', 'i', 'o', 'u'}
+
+emotional_degree = ["a little bit", "pretty", "ridiculously", "amazingly", "curiously"]
 
 # "You would be well advised to avoid..."
 avoid = ["shopping", "engaging strangers in conversation", "swimming",

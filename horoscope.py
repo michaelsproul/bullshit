@@ -1,25 +1,85 @@
 import random
 
+from datetime import date, timedelta
 from wordlist import *
 
-def sentence_case(sentence, exciting=False):
-	if exciting:
-		return "%s%s!" %(sentence[0].upper(), sentence[1:])
-	else:
-		return "%s%s." %(sentence[0].upper(), sentence[1:])
-
 def horoscope():
-	sentences = [statement_s, cosmic_implication_s, plain_warning_s]
-	random.shuffle(sentences)
-	final_text = ""
-	for sentence in sentences:
-		final_text += sentence() + " "
-	return final_text.rstrip()
+	# Feeling good or bad?
+	statement = choose([positive_statement_s, negative_statement_s])
 
-def statement_s():
-	s = "You are feeling %s %s" % (choose(emotional_degree), choose(good_feeling_adj))
-	s += ", and there's nothing anyone can %s to stop you" % choose(["say", "do"])
-	return sentence_case(s, exciting=True)
+	openers = [statement, cosmic_implication_s]
+	sentences = [statement, cosmic_implication_s, plain_warning_s]
+
+	# Pick an opening sentence type and remove it from the latter sentences
+	opener = choose(openers)
+	sentences.remove(opener)
+
+	# Delete a random sentence to avoid rambling on
+	get_rid = choose(sentences)
+	sentences.remove(get_rid)
+
+	# Shuffle the remaining sentence types and evaluate them
+	random.shuffle(sentences)
+	final_text = opener()
+
+	for sentence in sentences:
+		final_text += " " + sentence()
+
+	# Optionally add a date prediction
+	if random.random() <= 0.5:
+		final_text += " " + date_prediction_s()
+
+	return final_text
+
+def random_sentence():
+	sentences = [date_prediction_s, plain_warning_s, cosmic_implication_s,
+			positive_statement_s, negative_statement_s]
+	return choose(sentences)()
+
+def date_prediction_s():
+	today = date.today()
+	days_in_future = random.randint(2, 8)
+	significant_day = today + timedelta(days=days_in_future)
+	month = significant_day.strftime("%B")
+	day = significant_day.strftime("%d").lstrip('0')
+	s = "%s %s will be an important day for you" % (month, day)
+	return sentence_case(s)
+
+def positive_statement_s():
+	s = feeling_statement(good_feeling_adj, positive_assertion)
+	exciting = True if random.random() <= 0.5 else False
+	return sentence_case(s, exciting)
+
+def negative_statement_s():
+	s = feeling_statement(bad_feeling_adj, negative_assertion)
+	return sentence_case(s)
+
+def feeling_statement(adjectives, ending):
+	adj = choose(adjectives)
+	adj = ing_to_ed(adj)
+
+	s = "You are feeling %s %s" % (choose(emotional_degree), adj)
+	s += ", " + ending()
+	return s
+
+def positive_assertion():
+	r = random.random()
+
+	if r <= 0.5:
+		return "and there's nothing anyone can %s to stop you" % choose(["say", "do"])
+	elif r <= 0.95:
+		return "and you don't care who knows it"
+	else:
+		return "and you don't give a fuck"
+
+def negative_assertion():
+	"Consolations for bad feelings"
+	r = random.random()
+
+	if r <= 0.7:
+		return "but don't worry, everything will improve %s" % choose(["shortly", "soon", "in due time"])
+	else:
+		return "perhaps you need a change in your life?"
 
 def plain_warning_s():
 	r = random.random()
@@ -66,7 +126,8 @@ def emotive_event():
 	r = random.random()
 
 	if r <= 0.5:
-		adj = choose(good_feeling_adj, good_emotive_adj, bad_emotive_adj)
+		adj = choose(good_feeling_adj, good_emotive_adj,
+				bad_feeling_adj, bad_emotive_adj)
 		return adj + " " + choose(time_period)
 	else:
 		noun = choose(good_emotive_noun, bad_emotive_noun)
@@ -91,3 +152,20 @@ def choose(*args):
 		j += 1
 
 	return args[j][i]
+
+def sentence_case(sentence, exciting=False):
+	sentence = sentence[0].upper() + sentence[1:]
+
+	if sentence[-1] in {'.', '!', '?'}:
+		return sentence
+	elif exciting:
+		return sentence + "!"
+	else:
+		return sentence + "."
+
+def ing_to_ed(word):
+	"Convert `ing' endings to `ed' endings"
+	if word[-3:] == "ing":
+		return (word[:-3] + "ed")
+	else:
+		return word
