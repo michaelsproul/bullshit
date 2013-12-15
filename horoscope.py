@@ -15,29 +15,68 @@ def horoscope():
 	# Pick a mood (usually positive)
 	mood = "good" if random.random() <= 0.8 else "bad"
 
-	openers = [feeling_statement_s, cosmic_implication_s]
-	sentences = [feeling_statement_s, cosmic_implication_s, warning_s]
+	discussion_s = choose_from([relationship_s, encounter_s])
+	sentences = [feeling_statement_s, cosmic_implication_s, warning_s,
+			discussion_s]
 
-	# Pick an opening sentence and remove it from the latter sentences
-	opener = choose(openers)
-	sentences.remove(opener)
-
-	# Delete a random sentence to avoid rambling on
-	get_rid = choose(sentences)
-	sentences.remove(get_rid)
-
-	# Shuffle the remaining sentence types and evaluate them
+	# Select 2 or 3 sentences
 	random.shuffle(sentences)
-	final_text = opener(mood)
-
-	for sentence in sentences:
-		final_text += " " + sentence(mood)
+	final_text = sentences[0](mood)
+	n = choose_from([2, 3])
+	for i in range(1, n):
+		final_text += " " + sentences[i](mood)
 
 	# Optionally add a date prediction
-	if random.random() <= 0.5:
+	if random.random() <= 0.5 and n == 2:
 		final_text += " " + date_prediction_s(mood)
 
 	return final_text
+
+
+def relationship_s(mood):
+	"""Generate a sentence about a relationship."""
+	if mood == "good":
+		verb = "strengthened"
+		talk = "discussion"
+	else:
+		verb = "strained"
+		talk = "argument"
+
+	person = choose_from(familiar_people)
+	topic = choose_from(conversation_topics)
+	s = "Your relationship with %s may be %s " % (person, verb)
+	s += "as the result of %s about %s" % (an(talk), topic)
+
+	return sentence_case(s)
+
+
+def encounter_s(mood):
+	"""Generate a few sentences about a meeting with another person."""
+	person = choose_from(familiar_people, strange_people)
+	location = choose_from(locations)
+	prep = location[0]
+	location = location[1]
+	s1 = "You may meet %s %s %s." % (person, prep, location)
+
+	if mood == "good":
+		discussion = choose_from(neutral_discussions, good_discussions)
+		if random.random() <= 0.5:
+			feeling = choose_from(good_feeling_nouns)
+			feeling = "feelings of %s" % feeling
+		else:
+			feeling = choose_from(good_emotive_nouns)
+	else:
+		discussion = choose_from(neutral_discussions, bad_discussions)
+		if random.random() <= 1:
+			feeling = choose_from(bad_feeling_nouns)
+			feeling = "feelings of %s" % feeling
+		else:
+			feeling = choose_from(bad_emotive_nouns)
+	topic = choose_from(conversation_topics)
+
+	s2 = "%s about %s may lead to %s." % (an(discussion), topic, feeling)
+	s2 = sentence_case(s2)
+	return "%s %s" % (s1, s2)
 
 
 def date_prediction_s(mood):
@@ -63,28 +102,29 @@ def date_prediction_s(mood):
 def feeling_statement_s(mood):
 	"""Generate a sentence that asserts a mood-based feeling."""
 	if mood == 'good':
-		adj = choose(good_feeling_adj)
-		degree = choose(good_degree, neutral_degree)
+		adj = choose_from(good_feeling_adjs)
+		degree = choose_from(good_degrees, neutral_degrees)
 		ending = positive_intensifier
 		exciting = True if random.random() <= 0.5 else False
 	else:
-		adj = choose(bad_feeling_adj)
-		degree = choose(good_degree, neutral_degree)
+		adj = choose_from(bad_feeling_adjs)
+		degree = choose_from(bad_degrees, neutral_degrees)
 		ending = consolation
 		exciting = False
 
 	adj = ing_to_ed(adj)
-	s = "You are feeling %s %s" % (degree, adj)
+	are = choose_from([" are", "'re"])
+	s = "You%s feeling %s %s" % (are, degree, adj)
 	s += ending()
 	return sentence_case(s, exciting)
 
 
 def positive_intensifier():
-	"""Extend a positive statement of feeling."""
+	"""Extend a statement of positive feelings."""
 	r = random.random()
 
 	if r <= 0.5:
-		verb = choose(["say", "do"])
+		verb = choose_from(["say", "do"])
 		return ", and there's nothing anyone can %s to stop you" % verb
 	elif r <= 0.95:
 		return ", and you don't care who knows it"
@@ -93,11 +133,11 @@ def positive_intensifier():
 
 
 def consolation():
-	"""Extend a negative statement of feeling."""
+	"""Provide consolation for feeling bad."""
 	r = random.random()
 
 	if r <= 0.6:
-		when =  choose(["shortly", "soon", "in due time"])
+		when =  choose_from(["shortly", "soon", "in due time"])
 		return ", but don't worry, everything will improve %s" % when
 	elif r <= 0.9:
 		return ", perhaps you need a change in your life?"
@@ -107,26 +147,43 @@ def consolation():
 
 def warning_s(mood):
 	r = random.random()
+	bad_thing = choose_from(avoid_list)
 
-	if r <= 0.5:
-		s = "You would be well advised to avoid " + choose(avoid)
+	if r <= 0.27:
+		s = "You would be well advised to avoid %s" % bad_thing
+	elif r <= 0.54:
+		s = "Avoid %s at all costs" % bad_thing
+	elif r <= 0.81:
+		s = "Steer clear of %s for a stress-free week"  % bad_thing
 	else:
-		s = "Avoid " + choose(avoid) + " at all costs"
+		also_bad = choose_uniq({bad_thing}, avoid_list)
+		s = "For a peaceful week, avoid %s and %s" % (bad_thing, also_bad)
 
 	return sentence_case(s)
 
 
 def cosmic_implication_s(mood):
-	s = cosmic_event()
-	s += " " + choose(prediction_verb)
-	s += " the " + choose(time_point)
+	"""Generate a sentence about the influence of a cosmic event."""
+	c_event = cosmic_event()
+	verb = choose_from(prediction_verbs)
 
-	event = emotive_event()
-	if event[0] in vowels:
-		s += " of an " + event
+	# Bad mood =  End of good, or start of bad
+	# Good mood = End of bad, or start of good
+	r = random.random()
+	if mood == 'bad' and r <= 0.5:
+		junction = choose_from(beginnings)
+		e_event = emotive_event('bad')
+	elif mood == 'bad':
+		junction = choose_from(endings)
+		e_event = emotive_event('good')
+	elif mood == 'good' and r <= 0.5:
+		junction = choose_from(beginnings)
+		e_event = emotive_event('good')
 	else:
-		s += " of a " + event
+		junction = choose_from(endings)
+		e_event = emotive_event('bad')
 
+	s = "%s %s the %s of %s" % (c_event, verb, junction, e_event)
 	return sentence_case(s)
 
 
@@ -134,41 +191,50 @@ def cosmic_event():
 	r = random.random()
 
 	if r <= 0.25:
-		return choose(planet) + " in retrograde"
+		return choose_from(planets) + " in retrograde"
 	elif r <= 0.5:
-		ce = "the " + choose(["waxing", "waning"])
-		ce += " of " + choose(planet, ["the moon"], star)
+		ce = "the " + choose_from(["waxing", "waning"])
+		ce += " of " + choose_from(planets, ["the moon"], stars)
 		return ce
 	elif r <= 0.6:
-		return "the " + choose(["New", "Full"]) + " Moon"
+		return "the " + choose_from(["New", "Full"]) + " Moon"
 	elif r <= 0.75:
-		return choose(wanky_event)
+		return choose_from(wanky_events)
 	else:
-		first = choose(planet, star, ["Moon"])
-		second = choose_uniq({first}, planet, star, ["Moon"])
-		return "The %s/%s %s" % (first, second, choose(aspect))
+		first = choose_from(planets, stars, ["Moon"])
+		second = choose_uniq({first}, planets, stars, ["Moon"])
+		return "The %s/%s %s" % (first, second, choose_from(aspects))
 
 
-def emotive_event():
-	r = random.random()
-
-	if r <= 0.5:
-		adj = choose(good_feeling_adj, good_emotive_adj,
-				bad_feeling_adj, bad_emotive_adj)
-		return adj + " " + choose(time_period)
+def emotive_event(mood):
+	"""Generate a sentence about a prolonged emotion."""
+	if mood == 'good':
+		adjectives_1 = good_feeling_adjs
+		adjectives_2 = good_emotive_adjs
+		nouns_1 = good_feeling_nouns
+		nouns_2 = good_emotive_nouns
 	else:
-		noun = choose(good_emotive_noun, bad_emotive_noun)
-		return choose(time_period) + " of " + noun
+		adjectives_1 = bad_feeling_adjs
+		adjectives_2 = bad_emotive_adjs
+		nouns_1 = bad_feeling_nouns
+		nouns_2 = bad_emotive_nouns
+
+	if random.random() <= 0.5:
+		adj = choose_from(adjectives_1, adjectives_2)
+		return "%s %s" % (adj, choose_from(time_periods))
+	else:
+		noun = choose_from(nouns_1, nouns_2)
+		return "%s of %s" % (choose_from(time_periods), noun)
 
 
 def choose_uniq(exclude, *args):
 	"""Choose a unique random item from a variable number of lists."""
-	item = choose(*args)
+	item = choose_from(*args)
 	while item in exclude:
-		item = choose(*args)
+		item = choose_from(*args)
 	return item
 
-def choose(*args):
+def choose_from(*args):
 	"""Choose a random item from a variable number of lists."""
 	num_words = 0
 	for list in args:
@@ -194,6 +260,11 @@ def sentence_case(sentence, exciting=False):
 	else:
 		return sentence + "."
 
+
+def opposite_mood(mood):
+	return 'good' if (mood == 'bad') else 'bad'
+
+
 def ing_to_ed(word):
 	"""Convert `ing' endings to `ed' endings."""
 	if word[-3:] == "ing":
@@ -201,6 +272,12 @@ def ing_to_ed(word):
 	else:
 		return word
 
+def an(word):
+	"""Prefix with 'a' or 'an', as appropriate."""
+	if word[0] in vowels:
+		return "an %s" % word
+	else:
+		return "a %s" % word
 
 def main():
 	# Parse command-line arguments
