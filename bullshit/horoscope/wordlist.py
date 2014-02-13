@@ -1,3 +1,32 @@
+import sys
+
+from . import dirtywords
+
+this_module = sys.modules[__name__]
+
+def _setup():
+	"""Create lists in this module with both "clean" & dirty words."""
+	for name in dir(dirtywords):
+		if name[:1] == "_":
+			continue
+
+		named_object = getattr(dirtywords, name)
+		if isinstance(named_object, list):
+			clean_list = getattr(this_module, name)
+			dirty_list = clean_list + named_object
+			dirty_name = "dirty_" + name
+			setattr(this_module, dirty_name, dirty_list)
+
+
+def wordlist(name, dirty=False, prefix=""):
+	"""Get a word list by name, with optional filth."""
+	name = prefix + name
+	dirty_name = "dirty_" + name
+	if dirty and hasattr(this_module, dirty_name):
+		return getattr(this_module, dirty_name)
+	return getattr(this_module, name)
+
+
 # Astrological words
 planets = ["Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus",
 		"Neptune", "Pluto"]
@@ -46,7 +75,6 @@ bad_feeling_nouns = ["bitterness", "disappointment", "sadness", "frustration",
 bad_emotive_nouns = ["bad luck", "misfortune", "déjà vu"]
 
 # Misc
-vowels = {'a', 'e', 'i', 'o', 'u'}
 prediction_verbs = ["heralds", "marks", "foreshadows", "signifies"]
 
 # You would be well advised to avoid...
@@ -163,3 +191,6 @@ conversation_topics = [	"the past",
 			"your feelings",
 			"their work"
 ]
+
+# Run the setup function once all names have been loaded
+_setup()

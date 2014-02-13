@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+
+import argparse
+
+from bullshit import horoscope
+
+if __name__ ==  "__main__":
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--dirty", action='store_true', help="Enable offensive horoscopes.")
+	args = parser.parse_args()
+	print(horoscope.generate(dirty=args.dirty))

@@ -8,7 +8,7 @@ Horoscope Generator | Statistically Insignificant Wisdom
 html {
 	min-width: 100%;
 	min-height: 100%;
-	background-image: url('bg.jpg');
+	background-image: url({{ url_for("static", filename="horoscope_bg.jpg") }});
 	background-size: cover;
 	background-position: center;
 	background-repeat: no-repeat;
@@ -28,6 +28,6 @@ body {
 </style>
 </head>
 <body>
-<h1><?php echo exec('python horoscope.py'); ?></h1>
+<h1>{{ horoscope }}</h1>
 </body>
 </html>
